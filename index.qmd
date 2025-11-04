@@ -1,34 +1,27 @@
 ---
 title: "Simulation Challenge"
 subtitle: "Starter Template with To-Dos"
+author: "Nate Prince"
+date: "2025-10-30"
 format:
   html: default
 execute:
-  echo: true
+  echo: false
   eval: true
 ---
 
 # 🎲 Simulation Challenge - Starter Template
 
-:::: {.callout-important}
-## 📋 What You Need To Do
-
-- [ ] Fork and create repo `simulationChallenge` in your GitHub
-- [ ] Clone locally and open in Cursor
-- [ ] Write your analysis in this `index.qmd`
-- [ ] Render to HTML (`quarto render` or Render button)
-- [ ] Push HTML to your repo and enable GitHub Pages
-- [ ] Share your site: `https://[your-username].github.io/simulationChallenge/`
-:::
-
-:::: {.callout-warning}
-## ⚠️ AI Partnership Required
-Use Cursor AI for speed, but ensure you understand and can explain the results in your own words.  Verify cursor's calculations as investment simulation is tricky.
-:::
-
 ## The Investment Game (Brief)
 
-You have the opportunity to buy-in to this game next week with $30,000. Your job is to analyze the potential outcomes of the game and communicate why or why you should not buy-in to the game.  
+"It was a clear black night, a clear white moon,
+Nate Prince was in class, trying to analyze;
+Whether a proposition from professor Adam was wise;
+Or a ploy that would lead to his ultimate financial demise."
+
+Professor Adam: "You have the opportunity to buy-in to this game next week with $30,000. Your job is to analyze the potential outcomes of the game and communicate why or why you should not buy-in to the game."
+
+Here is how the game works:
 
 Each year after buy-in you flip a fair coin:
 
@@ -74,112 +67,354 @@ investmentDAG.add_plate([-2, 0.5, 7.8, 1.0], label="t = 1, ..., N", shift=-0.1)
 investmentDAG.show()
 ```
 
-## Analysis Tasks (Fill These In)
-
-::::: {.callout-note}
-## Grading Scope
-
-- Sections 1–4: required and can earn up to 90% of the grade.
-- Sections 5–6: optional; strong, well-supported work here can bring your score up to 100%.
-::::
+## Analysis
 
 ### 1) Expected Value After 1 Flip
 
-TODO: Explain whether the expected value of your account balance after one flip is >, =, or < $30,000. What is the gain in expected value as a percentage of your buy-in? Does this simple analysis suggest you should buy-in to the game?
+After one flip, the expected value of the account balance is **greater than** $30,000.
+
+**Calculation:**
+- If heads (50% probability): $30,000 × 1.5 = $45,000
+- If tails (50% probability): $30,000 × 0.6 = $18,000
+- Expected value = 0.5 × $45,000 + 0.5 × $18,000 = $31,500
+
+The gain in expected value is **5.0%** of the buy-in ($31,500 - $30,000 = $1,500; $1,500 / $30,000 = 0.05).
+
+However, this simple analysis is **misleading** and does not suggest you should buy-in to the game. While the expected value is positive after one flip, this ignores the compounding nature of repeated coin flips. The asymmetric returns (50% gain vs. 40% loss) create a multiplicative process where the expected value grows linearly over time, but the actual outcomes become highly skewed. Most simulations will result in losses despite the positive expected value, making this a mathematically interesting but practically risky investment.
 
 ```{python}
 #| label: q1-expected-value-py
-#| echo: true
+#| echo: false
 
-# TODO: Compute EV after one flip in Python
-# - Show calculation and brief explanation
+# Compute expected value after one flip
+initial_balance = 30000
+heads_multiplier = 1.5
+tails_multiplier = 0.6
+
+# Expected balance after one flip
+expected_balance = 0.5 * (initial_balance * heads_multiplier) + 0.5 * (initial_balance * tails_multiplier)
+
+print(f"Initial balance: ${initial_balance:,.2f}")
+print(f"Heads outcome: ${initial_balance * heads_multiplier:,.2f}")
+print(f"Tails outcome: ${initial_balance * tails_multiplier:,.2f}")
+print(f"Expected value after one flip: ${expected_balance:,.2f}")
+print(f"Gain as percentage of buy-in: {((expected_balance - initial_balance) / initial_balance) * 100:.1f}%")
 
 ```
 
 ### 2) Single Simulation Over Time (Narrative + Plot)
 
-Briefly narrate and visualize what happens to your account balance over the course of one run. Are you happy with the outcome? Why? or Why not?  You can use a time series plot to visualize the changes in your account balance over time.
+The single simulation below shows a typical path for this investment game. Starting with $30,000, each year the coin flip either multiplies the balance by 1.5 (heads) or 0.6 (tails). With 48 years of compounding, even though the expected value after each flip is positive (+5%), the multiplicative process creates extreme volatility. In this particular run, you can see periods of both growth and decline, with the final outcome heavily dependent on the sequence of coin flips. The mathematical property that makes this investment risky is that losses compound exponentially—a few consecutive tails can devastate the balance even if the overall expected value remains positive.
 
 ```{python}
 #| label: q2-single-sim-py
-#| echo: true
-#| fig-cap: "Single simulation path of account balance"
+#| echo: false
+#| fig-cap: "Single simulation path of account balance over 48 years"
 
-# TODO: Simulate one path from $30,000 over N periods
-# - Make a matplotlib (OO) time-series
-# - Set seed for reproducibility
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Set seed for reproducibility
+np.random.seed(42)
+
+# Simulation parameters
+initial_balance = 30000
+years = 48
+
+# Initialize arrays
+balances = np.zeros(years + 1)
+balances[0] = initial_balance
+
+# Simulate coin flips and calculate balance over time
+for i in range(1, years + 1):
+    coin_flip = np.random.rand()
+    if coin_flip < 0.5:  # Heads: increase by 50%
+        balances[i] = balances[i-1] * 1.5
+    else:  # Tails: decrease by 40%
+        balances[i] = balances[i-1] * 0.6
+
+# Create time series plot using matplotlib OO interface
+fig, ax = plt.subplots(figsize=(10, 6))
+years_array = np.arange(years + 1)
+
+ax.plot(years_array, balances, linewidth=2, color='steelblue', label='Account Balance')
+ax.axhline(y=initial_balance, color='red', linestyle='--', linewidth=1.5, alpha=0.7, label='Initial Buy-in ($30,000)')
+ax.set_xlabel('Years Since Buy-in', fontsize=12)
+ax.set_ylabel('Account Balance ($)', fontsize=12)
+ax.set_title('Single Simulation: Account Balance Over Time', fontsize=14, fontweight='bold')
+ax.grid(True, alpha=0.3)
+ax.legend(fontsize=10)
+ax.ticklabel_format(style='plain', axis='y')
+
+# Format y-axis to show currency properly
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
+
+plt.tight_layout()
+plt.show()
+
+# Print summary statistics for this single run
+print(f"Starting balance: ${initial_balance:,.2f}")
+print(f"Ending balance: ${balances[-1]:,.2f}")
+print(f"Final gain/loss: ${balances[-1] - initial_balance:,.2f}")
+print(f"Percentage change: {((balances[-1] / initial_balance) - 1) * 100:.1f}%")
 
 ```
 
 ### 3) 100 Simulations: Distribution of Final Balances
 
-TODO: Visually and narratively describe the distribution of your account balance after running the 100 simulations. What is the probability of outcomes that you'd be happy with after having invested $30,000?
+Running 100 simulations reveals a striking property of this investment game: the distribution of final balances is highly right-skewed with a long tail extending to extremely high values. Despite the positive expected value per flip, the mean is pulled upward by a small number of extremely lucky paths, while the median remains much lower. This demonstrates the mathematical paradox: even though you would expect to gain money on average, most individual simulations actually lose money. The probability of ending above the initial $30,000 buy-in is surprisingly low, revealing why expected value alone is insufficient for making this investment decision.
 
 ```{python}
 #| label: q3-dist-100-py
-#| echo: true
+#| echo: false
 #| fig-cap: "Distribution of final balances across 100 simulations"
 
-# TODO: Run 100 simulations and plot histogram of final balances
-# - Add vertical line at $30,000
-# - Compute mean, median, and P(final > $30,000)
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Set seed for reproducibility
+np.random.seed(42)
+
+# Simulation parameters
+initial_balance = 30000
+years = 48
+n_simulations = 100
+
+# Store final balances from all simulations
+final_balances = np.zeros(n_simulations)
+
+# Run 100 simulations
+for sim in range(n_simulations):
+    # Reset balance for each simulation
+    balance = initial_balance
+    
+    # Simulate 48 years of coin flips
+    for year in range(years):
+        coin_flip = np.random.rand()
+        if coin_flip < 0.5:  # Heads: increase by 50%
+            balance = balance * 1.5
+        else:  # Tails: decrease by 40%
+            balance = balance * 0.6
+    
+    # Store final balance
+    final_balances[sim] = balance
+
+# Compute statistics
+mean_final = np.mean(final_balances)
+median_final = np.median(final_balances)
+prob_above_30k = np.mean(final_balances > 30000)
+
+# Create a more meeting-friendly visualization: Box plot with histogram
+fig, axes = plt.subplots(2, 1, figsize=(10, 7), 
+                         gridspec_kw={'height_ratios': [2, 1]},
+                         sharex=True)
+
+# Top: Box plot
+box_parts = axes[0].boxplot([final_balances], vert=True, patch_artist=True, 
+                             widths=0.6, showmeans=True)
+box_parts['boxes'][0].set_facecolor('lightblue')
+box_parts['boxes'][0].set_alpha(0.7)
+
+# Add reference line for initial buy-in
+axes[0].axhline(y=30000, color='red', linestyle='--', linewidth=2, 
+                label='Initial Buy-in ($30,000)', alpha=0.8)
+axes[0].set_ylabel('Final Account Balance ($)', fontsize=12, fontweight='bold')
+axes[0].set_title('Distribution of Final Balances: 100 Simulations', 
+                  fontsize=14, fontweight='bold', pad=15)
+axes[0].grid(True, alpha=0.3, axis='y')
+axes[0].legend(fontsize=10, loc='upper left')
+axes[0].yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x/1000:.0f}K'))
+
+# Bottom: Histogram with counts
+n, bins, patches = axes[1].hist(final_balances, bins=20, edgecolor='black', 
+                                 alpha=0.8, color='steelblue')
+axes[1].axvline(x=30000, color='red', linestyle='--', linewidth=2, alpha=0.8)
+axes[1].set_xlabel('Final Account Balance ($)', fontsize=12, fontweight='bold')
+axes[1].set_ylabel('Count', fontsize=11)
+axes[1].grid(True, alpha=0.3, axis='y')
+axes[1].xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x/1000:.0f}K'))
+
+# Color bars based on whether they're above or below initial buy-in
+for i, patch in enumerate(patches):
+    patch.set_facecolor('crimson' if bins[i] < 30000 else 'forestgreen')
+
+plt.tight_layout()
+plt.show()
+
+# Print statistics
+print(f"Mean final balance: ${mean_final:,.2f}")
+print(f"Median final balance: ${median_final:,.2f}")
+print(f"P(final > $30,000): {prob_above_30k:.3f}")
+print(f"P(final ≤ $30,000): {1 - prob_above_30k:.3f}")
 
 ```
 
 ### 4) Probability Balance > $30,000 at Age 75 (Original Game)
 
-TODO: Report the probability estimate and interpret its practical meaning.
+Using the 100 simulations above, the probability that your final balance exceeds the initial $30,000 buy-in is quite low. This probability estimate reveals the practical meaning of the expected value paradox: while the arithmetic mean suggests you should invest, the majority of individual outcomes result in losses. This happens because the geometric mean of returns (which governs actual wealth growth) is negative even though the arithmetic mean is positive. For most individual investors, you would expect to lose money over the 48-year period, making this investment unsuitable despite its positive expected value.
 
 ```{python}
 #| label: q4-prob-original-py
-#| echo: true
+#| echo: false
 
-# TODO: Using the 100 simulations above, estimate P(final > 30000)
-# - Print numeric result with 3 decimals
+# Re-run simulations to compute P(final > 30000) 
+# (This ensures the cell is standalone and produces the estimate)
+import numpy as np
+
+np.random.seed(42)
+
+initial_balance = 30000
+years = 48
+n_simulations = 100
+
+final_balances = np.zeros(n_simulations)
+
+for sim in range(n_simulations):
+    balance = initial_balance
+    for year in range(years):
+        coin_flip = np.random.rand()
+        if coin_flip < 0.5:
+            balance = balance * 1.5
+        else:
+            balance = balance * 0.6
+    final_balances[sim] = balance
+
+prob_above_30k = np.mean(final_balances > 30000)
+
+print(f"Estimated P(final > $30,000): {prob_above_30k:.3f}")
 
 ```
 
 ### 5) Modified Strategy (Bet Exactly 50% Each Round)
 
-Instead of having the full balance at risk with each coin flip, assume only 25% of your balance is gambled each year. Compare this to the original game. Which is riskier? Which has better upside?
+Nate Prince: " How about this... Instead of having the full balance at risk with each coin flip, assume only 25% of your balance is gambled each year. I'll compare this to the original game. Which is riskier? Which has better upside?" Professor Adam: "I'll let you decide."
+
+
+
+The modified strategy dramatically changes the risk profile. By only gambling 25% of your balance each year, you preserve 75% of your wealth regardless of the coin flip outcome. This creates a fundamentally different probability structure: heads multiplies 25% by 1.5 and adds it back, while tails multiplies 25% by 0.6. The modified strategy is less risky and has a lower probability of ruin, but also has less upside potential since only a fraction of wealth is exposed to the beneficial compound growth. The distribution of outcomes is more centered and predictable compared to the original's extreme skewness.
 
 ```{python}
 #| label: q5-modified-50pct-py
-#| echo: true
-#| fig-cap: "Modified strategy distribution (bet 50% each round)"
+#| echo: false
+#| fig-cap: "Comparison of original vs modified strategy distributions"
 
-# TODO: Implement the modified game
-# - Run 100 simulations; plot distribution of final balances
-# - Estimate P(final > 30000) and compare to original
-# - visually compare the outcome distributions of the original and modified strategies
+import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(42)
+
+initial_balance = 30000
+years = 48
+n_simulations = 100
+
+# Store results for both strategies
+original_final = np.zeros(n_simulations)
+modified_final = np.zeros(n_simulations)
+
+# Run 100 simulations for original strategy
+for sim in range(n_simulations):
+    balance = initial_balance
+    for year in range(years):
+        coin_flip = np.random.rand()
+        if coin_flip < 0.5:
+            balance = balance * 1.5
+        else:
+            balance = balance * 0.6
+    original_final[sim] = balance
+
+# Run 100 simulations for modified strategy (bet 25%)
+np.random.seed(42)  # Reset seed for same coin flip sequence
+for sim in range(n_simulations):
+    balance = initial_balance
+    for year in range(years):
+        coin_flip = np.random.rand()
+        if coin_flip < 0.5:  # Heads: 25% of balance gets 50% return
+            balance = balance * 0.75 + balance * 0.25 * 1.5
+        else:  # Tails: 25% of balance loses 40%
+            balance = balance * 0.75 + balance * 0.25 * 0.6
+    modified_final[sim] = balance
+
+# Compute statistics
+original_prob = np.mean(original_final > 30000)
+modified_prob = np.mean(modified_final > 30000)
+original_mean = np.mean(original_final)
+modified_mean = np.mean(modified_final)
+original_median = np.median(original_final)
+modified_median = np.median(modified_final)
+
+# Create comparison plot
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+# Original strategy histogram
+n1, bins1, patches1 = ax1.hist(original_final, bins=30, edgecolor='black', alpha=0.7, color='steelblue', range=(0, 500000))
+ax1.axvline(x=30000, color='red', linestyle='--', linewidth=2, label='Initial Buy-in')
+ax1.axvline(x=original_mean, color='green', linestyle='--', linewidth=1.5, alpha=0.7)
+ax1.set_xlabel('Final Balance ($)', fontsize=13, fontweight='bold')
+ax1.set_ylabel('Frequency', fontsize=13, fontweight='bold')
+ax1.set_title(f'Original Strategy\nMean: ${original_mean:,.0f}, P(>30k): {original_prob:.3f}', fontsize=14, fontweight='bold')
+ax1.legend(fontsize=11)
+ax1.grid(True, alpha=0.3, axis='y')
+ax1.set_yscale('log')
+ax1.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x/1000:.0f}K'))
+ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x)}'))
+
+# Color bars based on whether they're above or below initial buy-in
+for i, patch in enumerate(patches1):
+    patch.set_facecolor('crimson' if bins1[i] < 30000 else 'forestgreen')
+
+# Modified strategy histogram
+n2, bins2, patches2 = ax2.hist(modified_final, bins=30, edgecolor='black', alpha=0.7, color='coral', range=(0, 500000))
+ax2.axvline(x=30000, color='red', linestyle='--', linewidth=2, label='Initial Buy-in')
+ax2.axvline(x=modified_mean, color='green', linestyle='--', linewidth=1.5, alpha=0.7)
+ax2.set_xlabel('Final Balance ($)', fontsize=13, fontweight='bold')
+ax2.set_ylabel('Frequency', fontsize=13, fontweight='bold')
+ax2.set_title(f'Modified Strategy (25% bet)\nMean: ${modified_mean:,.0f}, P(>30k): {modified_prob:.3f}', fontsize=14, fontweight='bold')
+ax2.legend(fontsize=11)
+ax2.grid(True, alpha=0.3, axis='y')
+ax2.set_yscale('log')
+ax2.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x/1000:.0f}K'))
+ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x)}'))
+
+# Color bars based on whether they're above or below initial buy-in
+for i, patch in enumerate(patches2):
+    patch.set_facecolor('crimson' if bins2[i] < 30000 else 'forestgreen')
+
+plt.tight_layout()
+plt.show()
+
+# Print comparison
+print("=" * 60)
+print("COMPARISON: Original vs Modified Strategy")
+print("=" * 60)
+print(f"\nOriginal Strategy:")
+print(f"  Mean: ${original_mean:,.2f}")
+print(f"  Median: ${original_median:,.2f}")
+print(f"  P(final > $30,000): {original_prob:.3f}")
+print(f"\nModified Strategy (25% bet):")
+print(f"  Mean: ${modified_mean:,.2f}")
+print(f"  Median: ${modified_median:,.2f}")
+print(f"  P(final > $30,000): {modified_prob:.3f}")
+print("\nWhich is riskier? The ORIGINAL strategy (higher variance, more extreme outcomes)")
+print("Which has better upside? The ORIGINAL strategy (higher mean, more high-value outliers)")
+print("Which is safer? The MODIFIED strategy (higher P(>30k), less variance)")
 
 ```
 
 ### 6) Briefly Explain Your Findings From The Previous Step in Light of A Concept Known as the "Kelly Criterion"
  
-What is the Kelly Criterion and how does it relate to the modified strategy?
+Nate Prince: "I've heard of the Kelly Criterion, but I'm not sure how it applies to this game."
+Professor Adam: "Let's take a look."
+
+The Kelly Criterion is a mathematical formula that determines the optimal fraction of capital to bet on repeated favorable bets to maximize long-term growth rate. It balances the desire to maximize expected returns against the risk of ruin. The formula is: f* = (bp - q) / b, where f* is the fraction to bet, b is the net odds received, p is the probability of winning, and q is the probability of losing (q = 1 - p).
+
+For the coin flip game, let's analyze: p = 0.5 (probability of heads), b = 0.5 (net gain of 50%), and q = 0.4 (net loss of 40%). This gives: f* = (0.5 × 0.5 - 0.4) / 0.5 = (0.25 - 0.4) / 0.5 = -0.3. Since the result is negative, the Kelly Criterion recommends not betting at all—the bet is unfavorable despite having a positive expected value.
+
+This explains the paradox: the game has positive expected value but is a losing proposition in the long run. The modified strategy of betting only 25% acknowledges this reality by reducing the bet fraction, which improves the probability of ending above the initial investment. However, even 25% is above the Kelly-optimal fraction (0%), which explains why the original strategy results in most outcomes being below the initial investment despite the positive expected value.
 
 
-## Professional Presentation (From Grading TLDR)
+# Conclusion 
 
-- **Clear narrative:** tell the story succinctly (aim for a 1–5 minute read)
-- **Focus on insights:** risk profiles, counter-intuitive results, practical implications
-- **Professional style:** concise writing, clean visuals, hide code where appropriate (`echo: false`)
-- **Human interpretation:** explain what results mean for real decisions
+The investment game is a classic example of the importance of considering the long-term implications of short-term gains. While the expected value suggests that investing in this game is a good idea, the reality is that most individual outcomes result in losses. This is because the multiplicative nature of the game creates a high variance in outcomes, with a small number of extremely lucky paths pulling the mean upward. The modified strategy of betting only 25% of the balance each year is a more realistic approach that reduces the risk of ruin while still maintaining a positive expected value.
 
-## Submission Checklist ✅
-
-- [ ] Quarto document written with narrative and results
-- [ ] Rendered to HTML successfully
-- [ ] Repository `simulationChallenge` created on GitHub
-- [ ] HTML committed and pushed
-- [ ] GitHub Pages enabled (Deploy from a branch → main → /(root))
-- [ ] Site accessible at `https://[your-username].github.io/simulationChallenge/`
-
-## Tips
-
-- Set random seeds for reproducibility
-- Use object-oriented plotting with `matplotlib`
-- Keep figures readable and labeled; prefer professional styling
-- Commit early and often; render locally before pushing
+In short, professor Adam's proposition is a losing proposition in the long run. Tried to set us up for financial failure 🤦 And Nate Prince is still trying to figure out how to get his money back.
 
