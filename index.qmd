@@ -204,39 +204,45 @@ mean_final = np.mean(final_balances)
 median_final = np.median(final_balances)
 prob_above_30k = np.mean(final_balances > 30000)
 
-# Create a more meeting-friendly visualization: Box plot with histogram
-fig, axes = plt.subplots(2, 1, figsize=(10, 7), 
-                         gridspec_kw={'height_ratios': [2, 1]},
-                         sharex=True)
+# Create histogram visualization with better scaling to show more data
+fig, ax = plt.subplots(figsize=(12, 6))
 
-# Top: Box plot
-box_parts = axes[0].boxplot([final_balances], vert=True, patch_artist=True, 
-                             widths=0.6, showmeans=True)
-box_parts['boxes'][0].set_facecolor('lightblue')
-box_parts['boxes'][0].set_alpha(0.7)
+# Use more bins to show more detail, and limit range to focus on bulk of distribution
+# but still show outliers
+q95 = np.percentile(final_balances, 95)
+x_range = (0, max(q95, 100000))  # Show up to 95th percentile or $100K, whichever is larger
 
-# Add reference line for initial buy-in
-axes[0].axhline(y=30000, color='red', linestyle='--', linewidth=2, 
-                label='Initial Buy-in ($30,000)', alpha=0.8)
-axes[0].set_ylabel('Final Account Balance ($)', fontsize=12, fontweight='bold')
-axes[0].set_title('Distribution of Final Balances: 100 Simulations', 
-                  fontsize=14, fontweight='bold', pad=15)
-axes[0].grid(True, alpha=0.3, axis='y')
-axes[0].legend(fontsize=10, loc='upper left')
-axes[0].yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x/1000:.0f}K'))
+# Create histogram with more bins for better detail
+n, bins, patches = ax.hist(final_balances, bins=40, edgecolor='black', 
+                           alpha=0.8, color='steelblue', range=x_range)
 
-# Bottom: Histogram with counts
-n, bins, patches = axes[1].hist(final_balances, bins=20, edgecolor='black', 
-                                 alpha=0.8, color='steelblue')
-axes[1].axvline(x=30000, color='red', linestyle='--', linewidth=2, alpha=0.8)
-axes[1].set_xlabel('Final Account Balance ($)', fontsize=12, fontweight='bold')
-axes[1].set_ylabel('Count', fontsize=11)
-axes[1].grid(True, alpha=0.3, axis='y')
-axes[1].xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x/1000:.0f}K'))
+# Add vertical line at $30,000
+ax.axvline(x=30000, color='red', linestyle='--', linewidth=3, 
+           label='Initial Buy-in ($30,000)', alpha=0.9, zorder=10)
+
+# Add mean and median lines
+ax.axvline(x=mean_final, color='green', linestyle=':', linewidth=2, 
+           label=f'Mean: ${mean_final:,.0f}', alpha=0.7)
+ax.axvline(x=median_final, color='orange', linestyle=':', linewidth=2, 
+           label=f'Median: ${median_final:,.0f}', alpha=0.7)
 
 # Color bars based on whether they're above or below initial buy-in
 for i, patch in enumerate(patches):
     patch.set_facecolor('crimson' if bins[i] < 30000 else 'forestgreen')
+
+ax.set_xlabel('Final Account Balance ($)', fontsize=13, fontweight='bold')
+ax.set_ylabel('Frequency (Count)', fontsize=13, fontweight='bold')
+ax.set_title('Distribution of Final Balances: 100 Simulations', 
+             fontsize=15, fontweight='bold', pad=15)
+ax.grid(True, alpha=0.3, axis='y')
+ax.legend(fontsize=11, loc='upper right')
+ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x/1000:.0f}K'))
+
+# Add text annotation showing outliers if any are cut off
+if np.max(final_balances) > x_range[1]:
+    ax.text(0.98, 0.95, f'Note: {np.sum(final_balances > x_range[1])} outlier(s) above ${x_range[1]/1000:.0f}K not shown', 
+            transform=ax.transAxes, fontsize=9, ha='right', va='top',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
 plt.tight_layout()
 plt.show()
